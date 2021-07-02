@@ -1,11 +1,11 @@
-package com.redis.spring.service;
+package com.redis.spring.user.service;
 
-import com.redis.spring.domain.User;
-import com.redis.spring.repository.RedisUserDAO;
+import com.redis.spring.user.domain.User;
+import com.redis.spring.user.dto.RegisterUserRequestDto;
+import com.redis.spring.user.repository.RedisUserDAO;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -17,17 +17,17 @@ public class UserService {
         this.redisUserDAO = redisUserDAO;
     }
 
-    public User registerUser(String userName) throws IOException {
-        User user = new User();
-        user.setUsername(userName);
-        user.setCreatedAt(LocalDateTime.now());
+    public User registerUser(RegisterUserRequestDto requestDto) throws IOException {
 
-        redisUserDAO.setUser(user);
+        redisUserDAO.setUser(requestDto.toEntity());
 
-        return redisUserDAO.getUser(userName);
+        return redisUserDAO.getUser(requestDto.getUsername());
     }
 
     public User getUser(String userName) throws IOException {
+        if (isUserBlocked(userName)) {
+            return null;
+        }
         return redisUserDAO.getUser(userName);
     }
 

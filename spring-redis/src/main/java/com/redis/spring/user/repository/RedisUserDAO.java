@@ -1,14 +1,13 @@
-package com.redis.spring.repository;
+package com.redis.spring.user.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.redis.spring.domain.User;
+import com.redis.spring.user.domain.User;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.StringRedisConnection;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
@@ -43,10 +42,7 @@ public class RedisUserDAO {
     }
 
     public Boolean isUserBlocked(String userName) {
-        String key = StringSubstitutor.replace(
-                BLOCKED_USER_KEY,
-                ImmutableMap.of("USERNAME", userName)
-        );
+        String key = getBlockedUserKey(userName);
 
         Boolean hasKey = stringRedisTemplate.hasKey(key);
 
@@ -54,10 +50,7 @@ public class RedisUserDAO {
     }
 
     public Long getUserBlockedSecondsLeft(String userName) {
-        String key = StringSubstitutor.replace(
-                BLOCKED_USER_KEY,
-                ImmutableMap.of("USERNAME", userName)
-        );
+        String key = getBlockedUserKey(userName);
 
         Long secondsLeft = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
 
@@ -65,28 +58,19 @@ public class RedisUserDAO {
     }
 
     public void setUserBlocked(String userName) {
-        String key = StringSubstitutor.replace(
-                BLOCKED_USER_KEY,
-                ImmutableMap.of("USERNAME", userName)
-        );
+        String key = getBlockedUserKey(userName);
 
-        stringRedisTemplate.opsForValue().set(key, StringUtils.EMPTY, 5, TimeUnit.MILLISECONDS);
+        stringRedisTemplate.opsForValue().set(key, StringUtils.EMPTY, 5, TimeUnit.MINUTES);
     }
 
     public void deleteUserBlocked(String userName) {
-        String key = StringSubstitutor.replace(
-                BLOCKED_USER_KEY,
-                ImmutableMap.of("USERNAME", userName)
-        );
+        String key = getBlockedUserKey(userName);
 
         stringRedisTemplate.delete(key);
     }
 
     public User getUser(String userName) throws IOException {
-        String key = StringSubstitutor.replace(
-                USER_KEY,
-                ImmutableMap.of("USERNAME", userName)
-        );
+        String key = getUserKey(userName);
 
         byte[] message = messagePackRedisTemplate.opsForValue().get(key);
 
@@ -98,10 +82,7 @@ public class RedisUserDAO {
     }
 
     public void setUser(User user) throws JsonProcessingException {
-        String key = StringSubstitutor.replace(
-                USER_KEY,
-                ImmutableMap.of("USERNAME", user.getUsername())
-        );
+        String key = getUserKey(user.getUsername());
 
         byte[] message = messagePackObjectMapper.writeValueAsBytes(user);
 
@@ -109,19 +90,13 @@ public class RedisUserDAO {
     }
 
     public void deleteUser(String userName) {
-        String key = StringSubstitutor.replace(
-                USER_KEY,
-                ImmutableMap.of("USERNAME", userName)
-        );
+        String key = getUserKey(userName);
 
         messagePackRedisTemplate.delete(key);
     }
 
     public List<String> getAllUsers() {
-        String key = StringSubstitutor.replace(
-                USER_KEY,
-                ImmutableMap.of("USERNAME", "*")
-        );
+        String key = getUserKey("*");
 
         RedisConnection redisConnection = redisConnectionFactory.getConnection();
         ScanOptions options = ScanOptions.scanOptions().count(50).match(key).build();
@@ -130,16 +105,32 @@ public class RedisUserDAO {
         Cursor<byte[]> cursor = redisConnection.scan(options);
 
         while (cursor.hasNext()) {
-//            System.out.println(new String(cursor.next()));
-            String user = StringUtils.replace(
-                    new String(cursor.next()),
+            String user = new String(cursor.next());
+            System.out.println(user);
+            String userName = StringUtils.replace(
+                    user,
                     "USERS:",
                     ""
                     );
-
-            users.add(user);
+            if (!isUserBlocked(userName)) {
+                users.add(userName);
+            }
         }
 
         return users;
+    }
+
+    public String getUserKey(String userName) {
+        return StringSubstitutor.replace(
+                USER_KEY,
+                ImmutableMap.of("USERNAME", userName)
+        );
+    }
+
+    public String getBlockedUserKey(String userName) {
+        return StringSubstitutor.replace(
+                BLOCKED_USER_KEY,
+                ImmutableMap.of("USERNAME", userName)
+        );
     }
 }

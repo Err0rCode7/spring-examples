@@ -1,9 +1,10 @@
-package com.redis.spring.Controller;
+package com.redis.spring.user.Controller;
 
 import com.google.common.collect.ImmutableMap;
-import com.redis.spring.domain.User;
-import com.redis.spring.dto.RegisterUserRequest;
-import com.redis.spring.service.UserService;
+import com.redis.spring.user.domain.User;
+import com.redis.spring.user.dto.BlockUserRequestDto;
+import com.redis.spring.user.dto.RegisterUserRequestDto;
+import com.redis.spring.user.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,10 +44,10 @@ public class RedisSampleUserController {
 
     @PostMapping("/users")
     public ResponseEntity<?> registerUser(
-            @RequestBody RegisterUserRequest request
+            @RequestBody RegisterUserRequestDto requestDto
     ) throws IOException {
 
-        User user = userService.registerUser(request.getUsername());
+        User user = userService.registerUser(requestDto);
 
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
@@ -71,11 +72,11 @@ public class RedisSampleUserController {
         return new ResponseEntity<>(ImmutableMap.of("unblock_after_seconds", secondsLeft), HttpStatus.OK);
     }
 
-    @PostMapping("/blocked-users/{username}")
+    @PostMapping("/blocked-users")
     public ResponseEntity<?> setBlockUser (
-            @PathVariable("username") String username
+            @RequestBody BlockUserRequestDto requestDto
     ) {
-        userService.setBlockUser(username);
+        userService.setBlockUser(requestDto.getUsername());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
