@@ -25,6 +25,12 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // Jackson MsgPack
+    implementation group: 'org.msgpack', name: 'jackson-dataformat-msgpack', version: '0.8.18'
+
+    // For ImmutableMap
+    implementation group: 'com.google.guava', name: 'guava', version: '28.1-jre'
 }
 
 test {
