@@ -31,6 +31,12 @@ dependencies {
 
     // For ImmutableMap
     implementation group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+
+    // For StringUtils
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+
+    // For StringSubstitutor
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.8'
 }
 
 test {

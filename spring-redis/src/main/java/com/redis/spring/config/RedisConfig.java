@@ -3,7 +3,6 @@ package com.redis.spring.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.redis.spring.domain.MyData;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,9 +23,10 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, byte[]> redisTemplate() {
+    public RedisTemplate<String, byte[]> messagePackRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, byte[]> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory((redisConnectionFactory()));
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setEnableDefaultSerializer(false);
         return redisTemplate;
